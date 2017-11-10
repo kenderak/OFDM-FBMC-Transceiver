@@ -5,10 +5,10 @@ clear all;close all;clc;
 simulationMethod = 'FBMC';   % OFDM or FBMC system simulation 
 modulationMethod = '4QAM';   % BPSK,QPSK,4QAM,16QAM,64QAM
 codingTechnique = 'None';    % None, ...
-numOfSym = 1000;              % Number of symbols
-sizeOfFFT = 16;              % Size of IFFT/FFT
-numOfCarrier = 8;           % Number of data carriers 
-overSampling = 2;            % Factor of oversampling (1,2,4 ...)
+numOfSym = 10000;              % Number of symbols
+sizeOfFFT = 1024;              % Size of IFFT/FFT
+numOfCarrier = 1024;           % Number of data carriers 
+overSampling = 1;            % Factor of oversampling (1,2,4 ...)
 cpLength = 0;                % Cyclic prefix length for an OFDM symbol
 K = 4;                       % Overlapping factor for FMBC modulation
 
@@ -73,7 +73,7 @@ pwelch(Modulated.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
     [],overSampling*sizeOfFFT,overSampling,'centered');
 
 % Complementary Cumulative Distribution Function (CCDF) estimation
-%ccdf(Modulated.signalTx,simulationMethod, sizeOfFFT);
+ccdf(Modulated,Param,simulationMethod);
 
 % Bit Error (BER) curves 
 figure(3)
