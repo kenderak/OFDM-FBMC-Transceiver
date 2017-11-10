@@ -1,4 +1,4 @@
-clear all;close all;clc;
+%clear all;close all;clc;
 
 %% OFDM/FBMC System Simulation - 2017/18/1
 % Settings

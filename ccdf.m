@@ -12,8 +12,10 @@ Offset = Param.Offset;
 
 switch sim
     case 'OFDM'
+        
         numOfSym = Param.numOfSym;
         PAPR_dB = zeros(numOfSym,1);
+        
         for i = 1:numOfSym
             index_start = 1 + (i-1)*(N+CP)*OV;
             index_end = i * (N+CP)*OV;
@@ -23,12 +25,14 @@ switch sim
         end
         
     case 'FBMC'
+        
         numOfSym = Param.NrOfSymbols;
         PAPR_dB = zeros(numOfSym-19,1);
+        
         for ii=10:numOfSym-10
             
             index_start = 1 + (ii-1)*N*OV;
-            index_end   = (ii-1) * N*OV + S*OV + Offset*OV;
+            index_end   = ii * N*OV;
              
             PAPR_dB(ii,1) = 10*log10(max(abs(signalTx(index_start:index_end))).^2 ...
                 / mean(abs(signalTx(index_start:index_end)).^2));
