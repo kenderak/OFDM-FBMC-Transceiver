@@ -4,6 +4,8 @@ Param.N = N;
 Param.D = D;
 Param.OV = OV;
 Param.CP = CP;
+Param.S = N;
+Param.Offset = 0;
 
 if (D == N)
 Param.CarrierIndexes    = [1:Param.N]';
