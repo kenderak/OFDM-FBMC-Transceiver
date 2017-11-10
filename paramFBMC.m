@@ -15,6 +15,8 @@ Param.CarrierIndexes    = [2:Param.D/2+1,Param.N-Param.D/2+1:Param.N]';
 end
 
 switch mod
+    case 'BPSK'
+        Param.M = 1;
     case '4QAM'
         Param.M = 2;
     case '16QAM'

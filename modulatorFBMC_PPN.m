@@ -11,39 +11,28 @@ CarrierIndexes = Param.CarrierIndexes;
 
 Modulator.NrOfSymbols = ceil(length(ModulationSymbols)/D);
 Modulator.NrOfExtModSymbs = mod(D - mod(length(ModulationSymbols),D),D);
-
-%%THETA
-k = 0:N-1;
-THETA = exp(1i*pi/2*k).';
-THETA2 = exp(1i*pi/2*(k+1)).';
-
-%%
 Modulator.SymbolsF(CarrierIndexes,:) = reshape([ModulationSymbols;zeros(Modulator.NrOfExtModSymbs,1)],D,Modulator.NrOfSymbols);
 
-odd_indexes  = CarrierIndexes(mod(CarrierIndexes,2)==0);
-OddIndexesSpread= (odd_indexes-1)+1;
-even_indexes = CarrierIndexes(mod(CarrierIndexes,2)==1);
-EvenIndexesSpread=(even_indexes-1)+1;
+% odd_indexes  = CarrierIndexes(mod(CarrierIndexes,2)==0);
+% OddIndexesSpread= (odd_indexes-1)+1;
+% even_indexes = CarrierIndexes(mod(CarrierIndexes,2)==1);
+% EvenIndexesSpread=(even_indexes-1)+1;
 
 
 Modulator.SymbolsFreal(N,Modulator.NrOfSymbols) = eps*1i;
 Modulator.SymbolsFimag(N,Modulator.NrOfSymbols) = eps*1i;
 
-Modulator.SymbolsFreal = zeros(N,Modulator.NrOfSymbols);
-Modulator.SymbolsFreal = real(Modulator.SymbolsF);
-Modulator.SymbolsFreal(EvenIndexesSpread,:) = Modulator.SymbolsFreal(EvenIndexesSpread,:); % *1i if theta not exist
+Theta = exp(1i*pi/2*[0:N-1]).';
+Modulator.SymbolsFreal = real(Modulator.SymbolsF); 
+Modulator.SymbolsFrealtheta = bsxfun(@times,Theta,Modulator.SymbolsFreal);
 
-Modulator.SymbolsFimag = zeros(N,Modulator.NrOfSymbols);
-Modulator.SymbolsFimag = imag(Modulator.SymbolsF);
-Modulator.SymbolsFimag(OddIndexesSpread,:) = Modulator.SymbolsFimag(OddIndexesSpread,:); % *1i if theta2 not exist
-
-% Multiply by Theta k and k+1
-Modulator.SymbolsFreal = bsxfun(@times,THETA,Modulator.SymbolsFreal);
-Modulator.SymbolsFimag = bsxfun(@times,THETA2,Modulator.SymbolsFimag);
+Theta = exp(1i*pi/2*[1:N]).';
+Modulator.SymbolsFimag = imag(Modulator.SymbolsF); 
+Modulator.SymbolsFimagtheta = bsxfun(@times,Theta,Modulator.SymbolsFimag);
 
 %% N - IFFT
-Modulator.SymbolsTreal= N*[ifft(Modulator.SymbolsFreal),zeros(N,3)];
-Modulator.SymbolsTimag= N*[ifft(Modulator.SymbolsFimag),zeros(N,3)];
+Modulator.SymbolsTreal= N*[ifft(Modulator.SymbolsFrealtheta),zeros(N,3)];
+Modulator.SymbolsTimag= N*[ifft(Modulator.SymbolsFimagtheta),zeros(N,3)];
 
 pmatrix(N,K) = eps*1i;
 p0 = ifft(circshift([Param.H_coeffsFB;zeros(K*N-length(Param.H_coeffsFB),1)],-4));
