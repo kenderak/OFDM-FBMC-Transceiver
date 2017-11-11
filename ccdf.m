@@ -2,23 +2,23 @@ function [CCDF] = ccdf(Modulated,Param, sim)
 % Calculate and plot CCDF curve
 signalTx = Modulated.signalTx;
 %% Parameters
-S = Param.S;
 N = Param.N;
 OV = Param.OV;
 CP = Param.CP;
-Offset = Param.Offset;      
+% S = Param.S;
+% Offset = Param.Offset;      
 
 % Peak-to-Average Ratio (PAPR[dB]) estimation
-
+symbolSize = (N+CP)*OV;
+numOfSym = floor(length(signalTx)/symbolSize);
 switch sim
     case 'OFDM'
         
-        numOfSym = Param.numOfSym;
         PAPR_dB = zeros(numOfSym,1);
         
         for i = 1:numOfSym
-            index_start = 1 + (i-1)*(N+CP)*OV;
-            index_end = i * (N+CP)*OV;
+            index_start = 1 + (i-1)*symbolSize;
+            index_end = i * symbolSize;
             
             PAPR_dB(i,1) = 10*log10(max(abs(signalTx(index_start:index_end))).^2 ...
                 / mean(abs(signalTx(index_start:index_end)).^2));
@@ -26,13 +26,12 @@ switch sim
         
     case 'FBMC'
         
-        numOfSym = Param.NrOfSymbols;
         PAPR_dB = zeros(numOfSym-19,1);
         
         for ii=10:numOfSym-10
             
-            index_start = 1 + (ii-1)*N*OV;
-            index_end   = ii * N*OV;
+            index_start = 1 + (ii-1)*symbolSize;
+            index_end   = ii * symbolSize;
              
             PAPR_dB(ii,1) = 10*log10(max(abs(signalTx(index_start:index_end))).^2 ...
                 / mean(abs(signalTx(index_start:index_end)).^2));
