@@ -1,16 +1,17 @@
-%clear all;close all;clc;
+clear all;close all;clc;
 
 %% OFDM/FBMC System Simulation - 2017/18/1
 % Settings
-simulationMethod = 'OFDM';   % OFDM or FBMC system simulation 
+simulationMethod = 'FBMC';   % OFDM or FBMC system simulation 
 modulationMethod = '4QAM';   % BPSK,QPSK,4QAM,16QAM,64QAM
 codingTechnique = 'None';    % None, ...
-numOfSym = 5000;              % Number of symbols
+numOfSym = 1000;              % Number of symbols
 sizeOfFFT = 128;              % Size of IFFT/FFT
-numOfCarrier = 128;           % Number of data carriers 
-overSampling = 1;            % Factor of oversampling (1,2,4 ...)
+numOfCarrier = 88;           % Number of data carriers 
+overSampling = 2;            % Factor of oversampling (1,2,4 ...)
 cpLength = 0;                % Cyclic prefix length for an OFDM symbol
 K = 4;                       % Overlapping factor for FMBC modulation
+CR = 7;                     % Clipping Ratio [dB]
 
 % Set the parameter object
 switch simulationMethod
@@ -36,6 +37,15 @@ switch simulationMethod
         %Modulated = modulatorFBMC_PPN(mappedData,Param);
         %Modulated = modulatorFBMC_PPN_NFFT(mappedData,Param);
 end
+
+%% Clipping
+signal = Modulated.signalTx;
+gamma = 10^(CR/20);
+sigma = sqrt(Modulated.Es);
+Amax = sigma*gamma;
+phase = exp(1i*angle(signal));
+signal(abs(signal) > Amax) = Amax*phase(abs(signal) > Amax);
+%Modulated.signalTx = signal;
 
 %% II. Settings of noise parameters for channel
 % Ratio for BER curve
@@ -70,7 +80,7 @@ end
 % Power Spectral Density
 figure(1)
 pwelch(Modulated.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
-    [],overSampling*sizeOfFFT,overSampling,'centered');
+    [],overSampling*sizeOfFFT,overSampling,'centered'); hold on;
 
 % Complementary Cumulative Distribution Function (CCDF) estimation
 CCDF = ccdf(Modulated,Param,simulationMethod);

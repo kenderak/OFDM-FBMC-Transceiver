@@ -32,5 +32,6 @@ Modulated.dataSerial(:,CarrierIndexes) = reshape(ModulationSymbols, numOfSym, nu
     OFDMmodulated = Modulated.IFFT_data_serial.';
  end
  Modulated.signalTx = OFDMmodulated(:);
+ Modulated.Es = mean(abs(Modulated.signalTx).^2);
 end
 
