@@ -36,6 +36,9 @@ switch simulationMethod
         Modulated = modulatorFBMC(mappedData,Param);
         %Modulated = modulatorFBMC_PPN(mappedData,Param);
         %Modulated = modulatorFBMC_PPN_NFFT(mappedData,Param);
+        
+        %Quantization
+        %ModulatedQ = quant_single_modulatorFBMC(mappedData,Param);
 end
 
 %% Clipping
@@ -81,6 +84,9 @@ end
 figure(1)
 pwelch(Modulated.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
     [],overSampling*sizeOfFFT,overSampling,'centered'); hold on;
+
+% pwelch(ModulatedQ.signalTx*single(sqrt(sizeOfFFT)), single(hann(overSampling*sizeOfFFT)),...
+%     [],single(overSampling*sizeOfFFT),single(overSampling),'centered');
 
 % Complementary Cumulative Distribution Function (CCDF) estimation
 CCDF = ccdf(Modulated,Param,simulationMethod);
