@@ -1,4 +1,4 @@
-function [ Param ] = paramFBMC( mod, numOfSym, sizeOfFFT, numOfCarrier, overSampling, K )
+function [ Param, ParamQ ] = paramFBMC( mod, numOfSym, sizeOfFFT, numOfCarrier, overSampling, K )
 
 Param.N     = sizeOfFFT;
 Param.D     = numOfCarrier;
@@ -58,5 +58,18 @@ Param.H_coeffsFB = circshift(Param.H_coeffs, Param.K);
 
     Param.EsH = mean(abs(Param.H_coeffs).^2);
 
+%% TEMP
+
+ParamQ.N     = sizeOfFFT;
+ParamQ.D     = numOfCarrier;
+ParamQ.K     = K;
+ParamQ.S     = Param.N * Param.K;
+ParamQ.OV    = overSampling;
+ParamQ.Offset = Param.N/2;
+ParamQ.CP    = 0;
+ParamQ.FB_odd =  Param.FB_odd;
+ParamQ.FB_even= Param.FB_even;
+ParamQ.NrOfSymbols = numOfSym;
+ParamQ.CarrierIndexes = Param.CarrierIndexes;
 end
 

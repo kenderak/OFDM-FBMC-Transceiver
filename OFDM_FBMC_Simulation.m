@@ -5,12 +5,12 @@ clear all;close all;clc;
 simulationMethod = 'FBMC';   % OFDM or FBMC system simulation 
 modulationMethod = '4QAM';   % BPSK,QPSK,4QAM,16QAM,64QAM
 codingTechnique = 'None';    % None, ...
-numOfSym = 100;              % Number of symbols
-sizeOfFFT = 64;              % Size of IFFT/FFT
-numOfCarrier = 32;           % Number of data carriers 
+numOfSym = 1000;              % Number of symbols
+sizeOfFFT = 256;              % Size of IFFT/FFT
+numOfCarrier = 222;           % Number of data carriers 
 overSampling = 1;            % Factor of oversampling (1,2,4 ...)
 cpLength = 0;                % Cyclic prefix length for an OFDM symbol
-K = 4;                       % Overlapping factor for FMBC modulation
+K = 4;                       % Overlapping factor for FMBC modulation (2,4)
 CR = 7;                     % Clipping Ratio [dB]
 
 % Set the parameter object
@@ -18,7 +18,7 @@ switch simulationMethod
     case 'OFDM'
         Param = paramOFDM(modulationMethod, numOfSym, sizeOfFFT, numOfCarrier, overSampling, cpLength);
     case 'FBMC'
-        Param = paramFBMC(modulationMethod, numOfSym, sizeOfFFT, numOfCarrier, overSampling, K);
+        [Param,ParamQ] = paramFBMC(modulationMethod, numOfSym, sizeOfFFT, numOfCarrier, overSampling, K);
 end
 
 %% I. OFDM/FBMC Transmitter
@@ -39,7 +39,7 @@ switch simulationMethod
         
         %Quantization
         %ModulatedQ = quant_single_modulatorFBMC(mappedData,Param);
-        ModulatedQ = quant_fixpoint_modulatorFBMC(mappedData, Param);
+        ModulatedQ = quant_fixpoint_modulatorFBMC(mappedData, ParamQ);
 end
 
 %% Clipping
@@ -83,11 +83,11 @@ end
 %% Performance Analysis
 % Power Spectral Density
 figure(1)
-pwelch(ModulatedQ.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
+pwelch(Modulated.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
     [],overSampling*sizeOfFFT,overSampling,'centered'); hold on;
 % This plot for the 32bit floating-point signal
-%  pwelch(ModulatedQ.signalTx*single(sqrt(sizeOfFFT)), single(hann(overSampling*sizeOfFFT)),...
-%      [],single(overSampling*sizeOfFFT),single(overSampling),'centered');
+pwelch(ModulatedQ.signalTx*single(sqrt(sizeOfFFT)), single(hann(overSampling*sizeOfFFT)),...
+     [],single(overSampling*sizeOfFFT),single(overSampling),'centered');
 
 % Complementary Cumulative Distribution Function (CCDF) estimation
 CCDF = ccdf(Modulated,Param,simulationMethod);
