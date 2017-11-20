@@ -23,6 +23,8 @@ switch mod
         Param.M = 4;
     case '64QAM'
         Param.M = 6;
+    otherwise
+        Param.M = 2;
 end
 
 Param.NrOfSymbols = numOfSym;

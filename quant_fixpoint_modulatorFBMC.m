@@ -48,21 +48,21 @@ for i=1:Modulated.NrOfSymbols
     
 end
 
-% Time domain
-Scale = 1;
-Modulated.SymbolsT      = ifft(Modulated.SymbolsFSpreadFilt)*Scale;
-Modulated.SymbolsTOff   = ifft(Modulated.SymbolsFSpreadOffFilt)*Scale;
-
+Scale = 1/Param.S;
 % Oversampling
 Modulated.SymbolsTOv = zeros(S * OV,Modulated.NrOfSymbols);
 Modulated.SymbolsTOv (1:S/2,:)= Modulated.SymbolsFSpreadFilt(1:S/2,:);
 Modulated.SymbolsTOv (end-S/2+1:end,:)= Modulated.SymbolsFSpreadFilt(S/2+1:end,:);
-Modulated.SymbolsTOv = ifft(Modulated.SymbolsTOv) * Scale * Param.OV;
+for i=1:Modulated.NrOfSymbols
+    Modulated.SymbolsTOv(:,i) = ifft_ct(Modulated.SymbolsTOv(:,i),S*OV,1) * Scale * Param.OV;
+end
 
 Modulated.SymbolsTOffOv = zeros(S*OV,Modulated.NrOfSymbols);
 Modulated.SymbolsTOffOv (1:S/2,:)= Modulated.SymbolsFSpreadOffFilt(1:S/2,:);
 Modulated.SymbolsTOffOv (end-S/2+1:end,:)= Modulated.SymbolsFSpreadOffFilt(S/2+1:end,:);
-Modulated.SymbolsTOffOv = ifft(Modulated.SymbolsTOffOv) * Scale*Param.OV;
+for i=1:Modulated.NrOfSymbols
+    Modulated.SymbolsTOffOv(:,i) = ifft_ct(Modulated.SymbolsTOffOv(:,i),S*OV,1) * Scale * Param.OV;
+end
 
 Modulated.Scale = Scale;
 
@@ -81,6 +81,29 @@ for i=1:Modulated.NrOfSymbols
     
 end
 Modulated.Es = mean(abs(Modulated.signalTx).^2);
+
+%% Cooley-Tukey IFFT algorithm
+function Xk= ifft_ct(xn,N,s)
+    if (N <= 1)
+        Xk(1) = xn(1);
+        return
+    else
+        % Evens!
+        xn_even = xn(1:2:N);
+        Xk(1:N/2)   = ifft_ct(xn_even,N/2,2*s);
+        
+        % Odds!
+        xn_odd = xn(2:2:N);
+        Xk(N/2+1:N) = ifft_ct(xn_odd,N/2,2*s);
+        
+        for k = 0:(N/2)-1
+            t = Xk(k+1);
+            Xk(k+1) = t + exp(2*pi*1i*k/N) * Xk(k+1+N/2);
+            Xk(k+1+N/2) = t - exp(2*pi*1i*k/N) * Xk(k+1+N/2);
+        end
+    end
+end
+
 end
 
 
