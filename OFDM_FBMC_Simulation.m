@@ -39,6 +39,7 @@ switch simulationMethod
         
         %Quantization
         %ModulatedQ = quant_single_modulatorFBMC(mappedData,Param);
+        ModulatedQ = quant_fixpoint_modulatorFBMC(mappedData, Param);
 end
 
 %% Clipping
@@ -84,7 +85,7 @@ end
 figure(1)
 pwelch(Modulated.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
     [],overSampling*sizeOfFFT,overSampling,'centered'); hold on;
-
+% This plot for the 32bit floating-point signal
 % pwelch(ModulatedQ.signalTx*single(sqrt(sizeOfFFT)), single(hann(overSampling*sizeOfFFT)),...
 %     [],single(overSampling*sizeOfFFT),single(overSampling),'centered');
 
