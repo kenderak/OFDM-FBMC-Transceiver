@@ -1,29 +1,29 @@
 function Modulator = modulatorFBMC_PPN_NFFT(ModulationSymbols, Param)
 
 %% Parameters
-S = Param.S;
-N = Param.N;
-OV = Param.OV;              % Oversampling 
-Offset = Param.Offset;      
-D = Param.D;
-K = Param.K;                % Overlapping factor
-CarrierIndexes = Param.CarrierIndexes;
+N               = Param.N;
+Offset          = Param.Offset;      
+D               = Param.D;
+K               = Param.K;
+CarrierIndexes  = Param.CarrierIndexes;
 
-Modulator.NrOfSymbols = ceil(length(ModulationSymbols)/D);
-Modulator.NrOfExtModSymbs = mod(D - mod(length(ModulationSymbols),D),D);
+NrOfSymbols     = ceil(length(ModulationSymbols)/D);
+NrOfExtModSymbs = mod(D - mod(length(ModulationSymbols),D),D);
 
 %%
-Modulator.SymbolsF(CarrierIndexes,:) = reshape([ModulationSymbols;zeros(Modulator.NrOfExtModSymbs,1)],D,Modulator.NrOfSymbols);
+SymbolsF(CarrierIndexes,:) = reshape([ModulationSymbols;zeros(NrOfExtModSymbs,1)],D,NrOfSymbols);
 
 %% N - IFFT
-Modulator.SymbolsT = N*[ifft(Modulator.SymbolsF), zeros(N,3)];
-%% Signal separation
-[H, G] = separate(Modulator.SymbolsT);
-%% Circular timeshift by N/4
-Modulator.H = circshift(H,[-N/4 0]);
-Modulator.G = circshift(1i*G,[-N/4 0]);
+SymbolsT = N*[ifft(SymbolsF), zeros(N,K-1)];
 
-%% Filter
+%% Signal separation
+[H, G] = separate(SymbolsT);
+
+%% Circular timeshift by N/4
+H = circshift(H,[-N/4 0]);
+G = circshift(1i*G,[-N/4 0]);
+
+%% Filter for polyphase network
 pmatrix(N,K) = eps*1i;
 p0 = ifft(circshift([Param.H_coeffsFB;zeros(K*N-length(Param.H_coeffsFB),1)],-4));
 for index=1:N
@@ -31,24 +31,29 @@ pmatrix(index,1:K)=p0([index:N:K*N]);
 end
 
 %% Polyphase structure
-pout_real(N,Modulator.NrOfSymbols+K-1) = eps*1i;
-pout_imag(N,Modulator.NrOfSymbols+K-1) = eps*1i;
+pout_real(N,NrOfSymbols+K-1) = eps*1i;
+pout_imag(N,NrOfSymbols+K-1) = eps*1i;
 
 for index=1:N
-pout_real(index,:) = filter(pmatrix(index,:), 1, Modulator.H(index,:));
-pout_imag(index,:) = filter(pmatrix(index,:), 1, Modulator.G(index,:));
+pout_real(index,:) = filter(pmatrix(index,:), 1, H(index,:));
+pout_imag(index,:) = filter(pmatrix(index,:), 1, G(index,:));
 end
 
-s_real=[pout_real(:,1).'];
-s_imag=[pout_imag(:,1).'];
-for index=2:Modulator.NrOfSymbols+3
-    s_real  = [s_real, pout_real(:,index).']; 
-    s_imag  = [s_imag, pout_imag(:,index).']; 
-end
+s_real = pout_real(:).';
+s_imag = pout_imag(:).';
 
-Modulator.signalTx = [s_real(1:end).'; zeros(1,N/2)'];
-Modulator.signalTx(N/2+1:end) = Modulator.signalTx(N/2+1:end) + s_imag.';
+%% FBMC signal generating
+signalTx = [s_real(1:end).'; zeros(1,Offset)'];
+signalTx(Offset+1:end) = signalTx(Offset+1:end) + s_imag.';
 
+%% Save everything for the return object
+Modulator.NrOfSymbols = NrOfSymbols;
+Modulator.NrOfExtModSymbs = NrOfExtModSymbs;
+Modulator.SymbolsF = SymbolsF;
+Modulator.SymbolsT = SymbolsT;
+Modulator.H = H;
+Modulator.G = G;
+Modulator.signalTx = signalTx;
 Modulator.Es = mean(abs(Modulator.signalTx).^2);
 end
 
