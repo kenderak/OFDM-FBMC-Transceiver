@@ -19,11 +19,10 @@ CarrierIndexes = Param.CarrierIndexes;
 FB_odd = fixp(Param.FB_odd);
 FB_even = fixp(Param.FB_even);
 %% IFFT matrix
-e = exp(-1i*2*pi/N);
-W = fixp(complex(zeros(N,N)));
-for k = 0:N-1
-    for n = 0:N-1
-        W(k+1,n+1) = fixp(e.^(n*k));
+W = fixp(complex(zeros(S,S)));
+for k = 0:S-1
+    for n = 0:S-1
+        W(k+1,n+1) = fixp(exp(-1i*2*pi/S).^(n*k));
     end
 end
 
