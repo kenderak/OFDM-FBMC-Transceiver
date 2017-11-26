@@ -3,7 +3,7 @@ function [ Modulated ] = quant_single_modulatorFBMC( ModulationSymbols, Param )
 %% Parameters
 S = single(Param.S);
 N = single(Param.N);
-OV = single(Param.OV);              % Oversampling 
+OV = single(Param.OV);
 Offset = single(Param.Offset);      
 D = single(Param.D);
 K = single(Param.K);
@@ -47,6 +47,9 @@ end
 Modulated.SymbolsFSpreadOff = SymbolsFSpreadOff;
 
 % Filtering in frequency domain
+SymbolsFSpreadFilt(N,Modulated.NrOfSymbols) = eps*i;
+SymbolsFSpreadOffFilt(N,Modulated.NrOfSymbols) = eps*i;
+
 for i=1:Modulated.NrOfSymbols
     SymbolsFSpreadFilt(:,i) = real(Modulated.SymbolsFSpread(:,i)).*FB_odd +...
                                         1i*imag(Modulated.SymbolsFSpread(:,i)).*FB_even;
@@ -57,13 +60,8 @@ end
 Modulated.SymbolsFSpreadFilt = SymbolsFSpreadFilt;
 Modulated.SymbolsFSpreadOffFilt = SymbolsFSpreadOffFilt;
 
-% Time domain
+%% Time domain
 Scale = single(1);
-SymbolsT      = ifft(SymbolsFSpreadFilt)*Scale;
-SymbolsTOff   = ifft(SymbolsFSpreadOffFilt)*Scale;
-Modulated.SymbolsT = SymbolsT;
-Modulated.SymbolsTOff = SymbolsTOff;
-
 % Oversampling
 SymbolsTOv = zeros(S * OV,Modulated.NrOfSymbols);
 SymbolsTOv (1:S/2,:)= SymbolsFSpreadFilt(1:S/2,:);

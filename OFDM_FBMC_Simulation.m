@@ -6,8 +6,8 @@ simulationMethod = 'FBMC';   % OFDM or FBMC system simulation
 modulationMethod = '4QAM';   % BPSK,QPSK,4QAM,16QAM,64QAM
 codingTechnique = 'None';    % None, ...
 numOfSym = 1000;              % Number of symbols
-sizeOfFFT = 32;              % Size of IFFT/FFT
-numOfCarrier = 16;           % Number of data carriers 
+sizeOfFFT = 64;              % Size of IFFT/FFT
+numOfCarrier = 32;           % Number of data carriers 
 overSampling = 1;            % Factor of oversampling (1,2,4 ...)
 cpLength = 0;                % Cyclic prefix length for an OFDM symbol
 K = 4;                       % Overlapping factor for FMBC modulation (2,4)
@@ -39,7 +39,11 @@ switch simulationMethod
         
         %Quantization
         %ModulatedQ = quant_single_modulatorFBMC(mappedData,Param);
+        %ModulatedQ = quant_single_modulatorFBMC_PPN(mappedData,Param);
+        ModulatedQ = quant_single_modulatorFBMC_PPN_NFFT(mappedData,Param);
+        tic;
         %ModulatedQ = quant_fixpoint_modulatorFBMC(mappedData, Param);
+        disp("Elapsed time: " + toc);
 end
 
 %% Clipping
@@ -89,10 +93,10 @@ pwelch(Modulated.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
 % pwelch(ModulatedQ.signalTx*single(sqrt(sizeOfFFT)), single(hann(overSampling*sizeOfFFT)),...
 %      [],single(overSampling*sizeOfFFT),single(overSampling),'centered');
 % This plot for the fix-pointed signal
-% pwelch(ModulatedQ.signalTx*fixp(sqrt(sizeOfFFT)), fixp(hann(overSampling*sizeOfFFT)),...
-%      [],fixp(overSampling*sizeOfFFT),fixp(overSampling),'centered');
+ pwelch(single(ModulatedQ.signalTx)*single(sqrt(sizeOfFFT)), hann(overSampling*sizeOfFFT),...
+      [],overSampling*sizeOfFFT,overSampling,'centered');
 
-Complementary Cumulative Distribution Function (CCDF) estimation
+% Complementary Cumulative Distribution Function (CCDF) estimation
 CCDF = ccdf(Modulated,Param,simulationMethod);
 
 % Bit Error (BER) curves 

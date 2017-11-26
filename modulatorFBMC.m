@@ -3,10 +3,10 @@ function Modulated = modulatorFBMC(ModulationSymbols, Param)
 %% Parameters
 S = Param.S;
 N = Param.N;
-OV = Param.OV;              % Oversampling 
+OV = Param.OV;
 Offset = Param.Offset;      
 D = Param.D;
-K = Param.K;                % Overlapping factor
+K = Param.K;
 CarrierIndexes = Param.CarrierIndexes;
 
 Modulated.NrOfSymbols = ceil(length(ModulationSymbols)/D);
@@ -48,11 +48,8 @@ for i=1:Modulated.NrOfSymbols
     
 end
 
-% Time domain
+%% Time domain
 Scale = 1;
-Modulated.SymbolsT      = ifft(Modulated.SymbolsFSpreadFilt)*Scale;
-Modulated.SymbolsTOff   = ifft(Modulated.SymbolsFSpreadOffFilt)*Scale;
-
 % Oversampling
 Modulated.SymbolsTOv = zeros(S * OV,Modulated.NrOfSymbols);
 Modulated.SymbolsTOv (1:S/2,:)= Modulated.SymbolsFSpreadFilt(1:S/2,:);

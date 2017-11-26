@@ -1,12 +1,11 @@
 function Modulated = quant_fixpoint_modulatorFBMC(ModulationSymbols, Param)
 %% Fixpoint precision settings
 WordLength = 64;
-FractionLength = 52;
+FractionLength = 58;
 Fp = fimath('ProductMode','SpecifyPrecision',...
 		'ProductWordLength',WordLength,'ProductFractionLength',FractionLength);
 Fs = fimath('SumMode','SpecifyPrecision',...
   'SumWordLength',WordLength,'SumFractionLength',FractionLength);
-
 
 %% Parameters
 S = Param.S;
@@ -19,10 +18,10 @@ CarrierIndexes = Param.CarrierIndexes;
 FB_odd = fixp(Param.FB_odd);
 FB_even = fixp(Param.FB_even);
 %% IFFT matrix
-W = fixp(complex(zeros(S,S)));
-for k = 0:S-1
-    for n = 0:S-1
-        W(k+1,n+1) = fixp(exp(-1i*2*pi/S).^(n*k));
+W = fixp(complex(zeros(S*OV,S*OV)));
+for k = 0:S*OV-1
+    for n = 0:S*OV-1
+        W(k+1,n+1) = fixp(exp(-1i*2*pi/(S*OV)).^(n*k));
     end
 end
 
@@ -68,21 +67,23 @@ for i=1:Modulated.NrOfSymbols
     
 end
 
-Scale = fixp(1/Param.S);
+Scale = fixp(OV/S);
 % Oversampling
 SymbolsTOv = fixp(complex(zeros(S * OV,Modulated.NrOfSymbols)));
 SymbolsTOv (1:S/2,:)= SymbolsFSpreadFilt(1:S/2,:);
 SymbolsTOv (end-S/2+1:end,:)= SymbolsFSpreadFilt(S/2+1:end,:);
 for i=1:Modulated.NrOfSymbols
-    SymbolsTOv(:,i) = ifft_matrix(SymbolsTOv(:,i),W) * Scale * OV;
+    SymbolsTOv(:,i) = fixp(W*SymbolsTOv(:,i)); %ifft_matrix(SymbolsTOv(:,i),W);
 end
+SymbolsTOv = mpy(Fp,SymbolsTOv, Scale);
 
 SymbolsTOffOv = fixp(complex(zeros(S * OV,Modulated.NrOfSymbols)));
 SymbolsTOffOv (1:S/2,:)= SymbolsFSpreadOffFilt(1:S/2,:);
 SymbolsTOffOv (end-S/2+1:end,:)= SymbolsFSpreadOffFilt(S/2+1:end,:);
 for i=1:Modulated.NrOfSymbols
-    SymbolsTOffOv(:,i) = ifft_matrix(SymbolsTOffOv(:,i),W) * Scale * OV;
+    SymbolsTOffOv(:,i) = fixp(W*SymbolsTOffOv(:,i)); %ifft_matrix(SymbolsTOffOv(:,i),W);
 end
+SymbolsTOffOv = mpy(Fp,SymbolsTOffOv, Scale);
 
 % signal memory allocation;
 signalTx = fixp(complex(zeros((N/2 + N * Modulated.NrOfSymbols + (K-1)*N)*OV,1)));
