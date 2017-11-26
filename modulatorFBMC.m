@@ -8,12 +8,14 @@ Offset = Param.Offset;
 D = Param.D;
 K = Param.K;
 CarrierIndexes = Param.CarrierIndexes;
+FB_odd = Param.FB_odd;
+FB_even = Param.FB_even;
 
-Modulated.NrOfSymbols = ceil(length(ModulationSymbols)/D);
-Modulated.NrOfExtModSymbs = mod(D - mod(length(ModulationSymbols),D),D);
+NrOfSymbols = ceil(length(ModulationSymbols)/D);
+NrOfExtModSymbs = mod(D - mod(length(ModulationSymbols),D),D);
 
 %%
-Modulated.SymbolsF(CarrierIndexes,:) = reshape([ModulationSymbols;zeros(Modulated.NrOfExtModSymbs,1)],D,Modulated.NrOfSymbols);
+SymbolsF(CarrierIndexes,:) = reshape([ModulationSymbols;zeros(NrOfExtModSymbs,1)],D,NrOfSymbols);
 
 odd_indexes  = CarrierIndexes(mod(CarrierIndexes,2)==0);
 OddIndexesSpread= (odd_indexes-1)*K+1;
@@ -21,62 +23,80 @@ even_indexes = CarrierIndexes(mod(CarrierIndexes,2)==1);
 EvenIndexesSpread=(even_indexes-1)*K+1;
 
 % Normal symbols
-Modulated.SymbolsFOv(S,Modulated.NrOfSymbols) = eps*1i;
-Modulated.SymbolsFOv(OddIndexesSpread,:)= real(Modulated.SymbolsF(odd_indexes,:));
-Modulated.SymbolsFOv(EvenIndexesSpread,:)= Modulated.SymbolsFOv(EvenIndexesSpread,:)+ 1i*real(Modulated.SymbolsF(even_indexes,:));
+SymbolsFOv(S,NrOfSymbols) = eps*1i;
+SymbolsFOv(OddIndexesSpread,:)= real(SymbolsF(odd_indexes,:));
+SymbolsFOv(EvenIndexesSpread,:)= SymbolsFOv(EvenIndexesSpread,:)+ 1i*real(SymbolsF(even_indexes,:));
 
-Modulated.SymbolsFSpread = Modulated.SymbolsFOv*0;
+SymbolsFSpread = SymbolsFOv*0;
 for i=-K:K
-    Modulated.SymbolsFSpread = Modulated.SymbolsFSpread + circshift(Modulated.SymbolsFOv,i);
+    SymbolsFSpread = SymbolsFSpread + circshift(SymbolsFOv,i);
 end
 
 % OFFSETSYMBOLS
-Modulated.SymbolsFOvOff(S,Modulated.NrOfSymbols)=eps*1i;
-Modulated.SymbolsFOvOff(OddIndexesSpread,:)= 1i*imag(Modulated.SymbolsF(odd_indexes,:));
-Modulated.SymbolsFOvOff(EvenIndexesSpread,:)= Modulated.SymbolsFOvOff(EvenIndexesSpread,:)+ imag(Modulated.SymbolsF(even_indexes,:));
+SymbolsFOvOff(S,NrOfSymbols)=eps*1i;
+SymbolsFOvOff(OddIndexesSpread,:)= 1i*imag(SymbolsF(odd_indexes,:));
+SymbolsFOvOff(EvenIndexesSpread,:)= SymbolsFOvOff(EvenIndexesSpread,:)+ imag(SymbolsF(even_indexes,:));
 
-Modulated.SymbolsFSpreadOff = Modulated.SymbolsFOvOff*0;
+SymbolsFSpreadOff = SymbolsFOvOff*0;
 for i=-K:K
-    Modulated.SymbolsFSpreadOff = Modulated.SymbolsFSpreadOff + circshift(Modulated.SymbolsFOvOff,i);
+    SymbolsFSpreadOff = SymbolsFSpreadOff + circshift(SymbolsFOvOff,i);
 end
 
-for i=1:Modulated.NrOfSymbols
-    Modulated.SymbolsFSpreadFilt(:,i) = real(Modulated.SymbolsFSpread(:,i)).*Param.FB_odd +...
-                                        1i*imag(Modulated.SymbolsFSpread(:,i)).*Param.FB_even;
-    Modulated.SymbolsFSpreadOffFilt(:,i)= 1i*imag(Modulated.SymbolsFSpreadOff(:,i)).*Param.FB_odd+...
-                                           real(Modulated.SymbolsFSpreadOff(:,i)).*Param.FB_even;
-    
+SymbolsFSpreadFilt(S,NrOfSymbols) = eps*i;
+SymbolsFSpreadOffFilt(S,NrOfSymbols) = eps*i;
+for i=1:NrOfSymbols
+    SymbolsFSpreadFilt(:,i) = ...
+        real(SymbolsFSpread(:,i)).*FB_odd +1i*imag(SymbolsFSpread(:,i)).*FB_even;
+                                        
+    SymbolsFSpreadOffFilt(:,i)= ...
+        1i*imag(SymbolsFSpreadOff(:,i)).*FB_odd + real(SymbolsFSpreadOff(:,i)).*FB_even;  
 end
 
 %% Time domain
 Scale = 1;
 % Oversampling
-Modulated.SymbolsTOv = zeros(S * OV,Modulated.NrOfSymbols);
-Modulated.SymbolsTOv (1:S/2,:)= Modulated.SymbolsFSpreadFilt(1:S/2,:);
-Modulated.SymbolsTOv (end-S/2+1:end,:)= Modulated.SymbolsFSpreadFilt(S/2+1:end,:);
-Modulated.SymbolsTOv = ifft(Modulated.SymbolsTOv) * Scale * Param.OV;
+SymbolsTOv = zeros(S * OV,NrOfSymbols);
+SymbolsTOv (1:S/2,:)= SymbolsFSpreadFilt(1:S/2,:);
+SymbolsTOv (end-S/2+1:end,:)= SymbolsFSpreadFilt(S/2+1:end,:);
+SymbolsTOv = ifft(SymbolsTOv) * Scale * OV;
 
-Modulated.SymbolsTOffOv = zeros(S*OV,Modulated.NrOfSymbols);
-Modulated.SymbolsTOffOv (1:S/2,:)= Modulated.SymbolsFSpreadOffFilt(1:S/2,:);
-Modulated.SymbolsTOffOv (end-S/2+1:end,:)= Modulated.SymbolsFSpreadOffFilt(S/2+1:end,:);
-Modulated.SymbolsTOffOv = ifft(Modulated.SymbolsTOffOv) * Scale*Param.OV;
+SymbolsTOffOv = zeros(S*OV,NrOfSymbols);
+SymbolsTOffOv (1:S/2,:)= SymbolsFSpreadOffFilt(1:S/2,:);
+SymbolsTOffOv (end-S/2+1:end,:)= SymbolsFSpreadOffFilt(S/2+1:end,:);
+SymbolsTOffOv = ifft(SymbolsTOffOv) * Scale* OV;
 
-Modulated.Scale = Scale;
+
 
 % signal memory allocation;
-Modulated.signalTx = zeros((N/2 + N * Modulated.NrOfSymbols + (K-1)*N)*OV,1);
-for i=1:Modulated.NrOfSymbols
+signalTx = zeros((N/2 + N * NrOfSymbols + (K-1)*N)*OV,1);
+for i=1:NrOfSymbols
     
     index_start = 1 + (i-1)*N*OV;
     index_end   =  (i-1) * N*OV + S*OV;
         
     % Normal symbols
-    Modulated.signalTx(index_start : index_end) = Modulated.signalTx(index_start : index_end)+ Modulated.SymbolsTOv(:,i);
+    signalTx(index_start : index_end) = signalTx(index_start : index_end)+ SymbolsTOv(:,i);
     % Offseted symbols - complex values
-    Modulated.signalTx(index_start + Offset * OV : index_end + Offset * OV) = Modulated.signalTx(index_start + Offset*OV:index_end + Offset*OV) + Modulated.SymbolsTOffOv(:,i)  ;
+    signalTx(index_start + Offset * OV : index_end + Offset * OV) = ...
+        signalTx(index_start + Offset*OV:index_end + Offset*OV) + SymbolsTOffOv(:,i);
 
     
 end
-Modulated.Es = mean(abs(Modulated.signalTx).^2);
+
+%% Save everything into the return object
+Modulated.NrOfSymbols = NrOfSymbols;
+Modulated.NrOfExtModSymbs = NrOfExtModSymbs;
+Modulated.SymbolsF = SymbolsF;
+Modulated.SymbolsFOv = SymbolsFOv;
+Modulated.SymbolsFSpread = SymbolsFSpread;
+Modulated.SymbolsFOvOff = SymbolsFOvOff;
+Modulated.SymbolsFSpreadOff = SymbolsFSpreadOff;
+Modulated.SymbolsFSpreadFilt = SymbolsFSpreadFilt;
+Modulated.SymbolsFSpreadOffFilt = SymbolsFSpreadOffFilt;
+Modulated.SymbolsTOv = SymbolsTOv;
+Modulated.SymbolsTOffOv = SymbolsTOffOv;
+Modulated.Scale = Scale;
+Modulated.signalTx = signalTx;
+Modulated.Es = mean(abs(signalTx).^2);
 end
 

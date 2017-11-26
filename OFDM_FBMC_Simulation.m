@@ -5,10 +5,10 @@ clear all;close all;clc;
 simulationMethod = 'FBMC';   % OFDM or FBMC system simulation 
 modulationMethod = '4QAM';   % BPSK,QPSK,4QAM,16QAM,64QAM
 codingTechnique = 'None';    % None, ...
-numOfSym = 1000;              % Number of symbols
+numOfSym = 100;              % Number of symbols
 sizeOfFFT = 64;              % Size of IFFT/FFT
-numOfCarrier = 32;           % Number of data carriers 
-overSampling = 1;            % Factor of oversampling (1,2,4 ...)
+numOfCarrier = 64;           % Number of data carriers 
+overSampling = 2;            % Factor of oversampling (1,2,4 ...)
 cpLength = 0;                % Cyclic prefix length for an OFDM symbol
 K = 4;                       % Overlapping factor for FMBC modulation (2,4)
 CR = 7;                     % Clipping Ratio [dB]
@@ -34,13 +34,13 @@ switch simulationMethod
         Modulated = modulatorOFDM(mappedData,Param);
     case 'FBMC'
         %Modulated = modulatorFBMC(mappedData,Param);
-        %Modulated = modulatorFBMC_PPN(mappedData,Param);
-        Modulated = modulatorFBMC_PPN_NFFT(mappedData,Param);
+        Modulated = modulatorFBMC_PPN(mappedData,Param);
+        %Modulated = modulatorFBMC_PPN_NFFT(mappedData,Param);
         
         %Quantization
         %ModulatedQ = quant_single_modulatorFBMC(mappedData,Param);
-        %ModulatedQ = quant_single_modulatorFBMC_PPN(mappedData,Param);
-        ModulatedQ = quant_single_modulatorFBMC_PPN_NFFT(mappedData,Param);
+        ModulatedQ = quant_single_modulatorFBMC_PPN(mappedData,Param);
+        %ModulatedQ = quant_single_modulatorFBMC_PPN_NFFT(mappedData,Param);
         tic;
         %ModulatedQ = quant_fixpoint_modulatorFBMC(mappedData, Param);
         disp("Elapsed time: " + toc);
@@ -74,8 +74,8 @@ for i=1:length(SNR)
         case 'OFDM'
             Demodulated = demodulatorOFDM(signalRx, Param);
         case 'FBMC'
-            %Demodulated = demodulatorFBMC(signalRx, Param);
-            Demodulated = demodulatorFBMC_THETA(signalRx, Param);
+            Demodulated = demodulatorFBMC(signalRx, Param);
+            %Demodulated = demodulatorFBMC_THETA(signalRx, Param);
     end
     % 2. Symbol demapping
     demappedData = Param.demapper(Demodulated.Symbols(:));
@@ -93,8 +93,8 @@ pwelch(Modulated.signalTx*sqrt(sizeOfFFT), hann(overSampling*sizeOfFFT),...
 % pwelch(ModulatedQ.signalTx*single(sqrt(sizeOfFFT)), single(hann(overSampling*sizeOfFFT)),...
 %      [],single(overSampling*sizeOfFFT),single(overSampling),'centered');
 % This plot for the fix-pointed signal
- pwelch(single(ModulatedQ.signalTx)*single(sqrt(sizeOfFFT)), hann(overSampling*sizeOfFFT),...
-      [],overSampling*sizeOfFFT,overSampling,'centered');
+%  pwelch(single(ModulatedQ.signalTx)*single(sqrt(sizeOfFFT)), hann(overSampling*sizeOfFFT),...
+%       [],overSampling*sizeOfFFT,overSampling,'centered');
 
 % Complementary Cumulative Distribution Function (CCDF) estimation
 CCDF = ccdf(Modulated,Param,simulationMethod);
